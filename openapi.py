@@ -2,6 +2,7 @@ import os
 import json
 from typing import List, Optional, Dict
 import logzero
+import uvicorn
 from logzero import logger
 from fastapi import FastAPI, APIRouter, Request, Body, Depends, HTTPException
 from fastapi.responses import JSONResponse
@@ -94,17 +95,46 @@ async def get_utxos(address: str, request: Request):
 async def create_transaction(request: Request, item = Body({})):
     spb = SpendBundle.from_json_dict(item['spend_bundle'])
     full_node_client = request.app.state.client
-    
+
     try:
         resp = await full_node_client.push_tx(spb)
     except ValueError as e:
         logger.warning("sendtx: %s, error: %r", spb, e)
         raise HTTPException(400, str(e))
- 
+
     return {
         'status': resp['status'],
         'id': spb.name().hex()
     }
+
+
+@router.post("/sendtx_all")
+async def create_transactions(request: Request, items=Body({})):
+    result = []
+    for item in items:
+        spb = SpendBundle.from_json_dict(item['spend_bundle'])
+        full_node_client = request.app.state.client
+
+        try:
+            resp = await full_node_client.push_tx(spb)
+            result.append({
+                'status': resp['status'],
+                'id': spb.name().hex(),
+                'code': 200,
+                'msg': '',
+                'address': ''
+            })
+        except ValueError as e:
+            logger.warning("sendtx_all: %s, error: %r", spb, e)
+            result.append({
+                'status': 'failed',
+                'id': '',
+                'code': 500,
+                'msg': str(e),
+                'address': ''
+            })
+
+    return result
 
 
 class ChiaRpcParams(BaseModel):
@@ -135,9 +165,98 @@ async def query_balance(address, request: Request):
     puzzle_hash = decode_puzzle_hash(address)
     amount = await get_user_balance(puzzle_hash, request)
     data = {
-        'amount': amount
+        'amount': amount,
+        'address': address
     }
     return data
+
+
+async def get_user_transactions(address: str, request: Request):
+    try:
+        if len(address) <= 0:
+            return HTTPException(400, "Missing address")
+        if not isinstance(address, str):
+            return HTTPException(400, "Invalid address")
+
+        puzzle_hash = decode_puzzle_hash(address)
+        full_node_client = request.app.state.client
+
+        coin_records_spent = await full_node_client.get_coin_records_by_puzzle_hash(puzzle_hash=puzzle_hash, include_spent_coins=True)
+
+        selected_network = settings.CHIA_CONFIG['selected_network']
+        prefix = settings.CHIA_CONFIG['full_node']['network_overrides']['config'][selected_network]['address_prefix']
+
+        # receieved coin info list
+        received = {}
+        send = []
+        for record in coin_records_spent:
+            if record.coin.amount == 0:
+                continue
+
+            parent_result = await full_node_client.get_coin_record_by_name(record.coin.parent_coin_info)
+            if parent_result.coin.puzzle_hash != puzzle_hash:
+                if record.coin.parent_coin_info not in received:
+                    received[record.coin.parent_coin_info] = {
+                        'type': 'receive',
+                        'transactions': [],
+                        'timestamp': record.timestamp,
+                        'block': record.confirmed_block_index,
+                        'amount': record.coin.amount,
+                        'fee': record.coin.amount,
+                    }
+
+                group_receive = received[record.coin.parent_coin_info]
+                group_receive['transactions'].append({
+                    'sender': encode_puzzle_hash(puzzle_hash=parent_result.coin.puzzle_hash, prefix=prefix),
+                    'amount': record.coin.amount,
+                })
+                group_receive['fee'] -= record.coin.amount
+
+            if record.spent:
+                coin_id = record.name
+
+                block_result_height = await full_node_client.get_block_record_by_height(record.spent_block_index)
+                additions, removals = await full_node_client.get_additions_and_removals(block_result_height.header_hash)
+                group_sender = {
+                    'type': 'send',
+                    'transactions': [],
+                    'timestamp': block_result_height.timestamp,
+                    'block': record.spent_block_index,
+                    'amount': record.coin.amount,
+                    'fee': record.coin.amount,
+                }
+
+                for child in additions:
+                    if str(child.coin.parent_coin_info).__eq__(str(coin_id)):
+                        if child.coin.puzzle_hash != puzzle_hash:
+                            group_sender['transactions'].append({
+                                'destination': encode_puzzle_hash(puzzle_hash=child.coin.puzzle_hash, prefix=prefix),
+                                'amount': child.coin.amount,
+                            })
+                        group_sender['fee'] -= child.coin.amount
+
+                send.append(group_sender)
+
+        received_array = []
+        for key in received:
+            received_item = received[key]
+            received_array.append(received_item)
+
+        transaction_groups = {
+            'send': send,
+            'receive': received_array
+        }
+
+        return transaction_groups
+    except Exception as e:
+        logger.error("transactions error: %r", e)
+        return HTTPException(400, "Could not fetch transactions")
+
+
+@router.get('/transactions')
+@cached(ttl=100, key_builder=lambda *args, **kwargs: f"balance:{kwargs['address']}", alias='default')
+async def query_transactions(address, request: Request):
+    return await get_user_transactions(address, request)
 
 
 DEFAULT_TOKEN_LIST = [
@@ -180,3 +299,11 @@ async def list_tokens():
 
 
 app.include_router(router, prefix="/v1")
+
+
+# def main():
+#     return query_transactions("xch16g76z3545xy2u4cgm52jyc7ymwyravn7m6unv9udfkvghreuuh7qa9cvfl", Request)
+#
+#
+# if __name__ == "__main__":
+#     uvicorn.run(app, host="0.0.0.0", port=8000)
