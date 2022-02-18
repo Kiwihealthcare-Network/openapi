@@ -127,7 +127,7 @@ async def create_transactions(request: Request, items=Body({})):
         except ValueError as e:
             logger.warning("sendtx_all: %s, error: %r", spb, e)
             result.append({
-                'status': 'failed',
+                'status': 'FAILED',
                 'id': '',
                 'code': 500,
                 'msg': str(e),
