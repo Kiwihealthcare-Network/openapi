@@ -243,6 +243,7 @@ async def get_user_transactions(address: str, request: Request):
             received_array.append(received_item)
 
         transaction_groups = {
+            'address': address,
             'send': send,
             'receive': received_array
         }
