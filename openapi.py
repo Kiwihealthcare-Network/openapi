@@ -159,7 +159,7 @@ async def get_user_balance(puzzle_hash: bytes, request: Request):
 
 
 @router.get('/balance')
-@cached(ttl=10, key_builder=lambda *args, **kwargs: f"balance:{kwargs['address']}", alias='default')
+@cached(ttl=100, key_builder=lambda *args, **kwargs: f"balance:{kwargs['address']}", alias='default')
 async def query_balance(address, request: Request):
     # todo: use blocke indexer and supoort unconfirmed param
     puzzle_hash = decode_puzzle_hash(address)
@@ -255,7 +255,7 @@ async def get_user_transactions(address: str, request: Request):
 
 
 @router.get('/transactions')
-@cached(ttl=100, key_builder=lambda *args, **kwargs: f"balance:{kwargs['address']}", alias='default')
+@cached(ttl=100, key_builder=lambda *args, **kwargs: f"transactions:{kwargs['address']}", alias='default')
 async def query_transactions(address, request: Request):
     return await get_user_transactions(address, request)
 
