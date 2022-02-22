@@ -325,9 +325,9 @@ async def list_tokens():
 app.include_router(router, prefix="/v1/kiwi")
 
 
-def main():
-    return query_transactions("tkik1d09r9nmkvr5t0gu2xgxpj4w6t9zc2gdgae8ewywxs7ty6h5lm6aq8klfue", Request)
-
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+# def main():
+#     return query_transactions("tkik1d09r9nmkvr5t0gu2xgxpj4w6t9zc2gdgae8ewywxs7ty6h5lm6aq8klfue", Request)
+#
+#
+# if __name__ == "__main__":
+#     uvicorn.run(app, host="0.0.0.0", port=8000)

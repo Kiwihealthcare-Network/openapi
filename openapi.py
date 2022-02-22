@@ -326,9 +326,9 @@ async def list_tokens():
 app.include_router(router, prefix="/v1/chia")
 
 
-def main():
-    return query_transactions("xch16g76z3545xy2u4cgm52jyc7ymwyravn7m6unv9udfkvghreuuh7qa9cvfl", Request)
-
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+# def main():
+#     return query_transactions("xch16g76z3545xy2u4cgm52jyc7ymwyravn7m6unv9udfkvghreuuh7qa9cvfl", Request)
+#
+#
+# if __name__ == "__main__":
+#     uvicorn.run(app, host="0.0.0.0", port=8000)
