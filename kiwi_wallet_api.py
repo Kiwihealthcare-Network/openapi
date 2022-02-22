@@ -26,8 +26,7 @@ log_dir = os.path.join(cwd, "logs")
 if not os.path.exists(log_dir):
     os.mkdir(log_dir)
 
-logzero.logfile(os.path.join(log_dir, "chia_wallet_api.log"), maxBytes=1e6, backupCount=3)
-
+logzero.logfile(os.path.join(log_dir, "kiwi_wallet_api.log"), maxBytes=1e6, backupCount=3)
 
 
 async def get_full_node_client() -> FullNodeRpcClient:
@@ -97,7 +96,7 @@ async def get_utxos(address: str, request: Request):
 
 
 @router.post("/sendtx")
-async def create_transaction(request: Request, item = Body({})):
+async def create_transaction(request: Request, item=Body({})):
     logger.info("/sendtx request: %r", item)
 
     spb = SpendBundle.from_json_dict(item['spend_bundle'])
@@ -213,7 +212,7 @@ async def get_user_transactions(address: str, request: Request):
                 continue
 
             parent_result = await full_node_client.get_coin_record_by_name(record.coin.parent_coin_info)
-            if parent_result is not None and parent_result.coin.puzzle_hash != puzzle_hash:
+            if parent_result.coin.puzzle_hash != puzzle_hash:
                 if record.coin.parent_coin_info not in received:
                     received[record.coin.parent_coin_info] = {
                         'type': 'receive',
@@ -323,11 +322,11 @@ async def list_tokens():
     return DEFAULT_TOKEN_LIST
 
 
-app.include_router(router, prefix="/v1/chia")
+app.include_router(router, prefix="/v1/kiwi")
 
 
 def main():
-    return query_transactions("xch16g76z3545xy2u4cgm52jyc7ymwyravn7m6unv9udfkvghreuuh7qa9cvfl", Request)
+    return query_transactions("tkik1d09r9nmkvr5t0gu2xgxpj4w6t9zc2gdgae8ewywxs7ty6h5lm6aq8klfue", Request)
 
 
 if __name__ == "__main__":

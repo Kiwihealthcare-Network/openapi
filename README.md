@@ -12,8 +12,13 @@ You can install Goby [here](https://chrome.google.com/webstore/detail/goby/jnkel
 git clone https://github.com/GobyWallet/openapi.git
 # change config.py
 
+# public package
 pip install -r requirements.txt
-uvicorn openapi:app
+
+# blockchain package(can only install one blockchain package in the system)
+pip install -r requirements_kiwi.txt
+
+uvicorn kiwi_wallet_api:app
 ```
 
 ## Thanks
