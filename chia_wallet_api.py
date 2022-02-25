@@ -323,7 +323,7 @@ async def list_tokens():
     return DEFAULT_TOKEN_LIST
 
 
-app.include_router(router, prefix="/v1/chia")
+app.include_router(router, prefix="/chia/v1")
 
 
 # def main():
