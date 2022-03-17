@@ -6,7 +6,7 @@ DeFi wallet on Chia Network.
 
 
 ```
-git clone https://github.com/Kiwihealthcare-Network/openapi/
+git clone https://github.com/Kiwihealthcare-Network/wallet-openapi/
 
 # change config.py
 
