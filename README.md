@@ -34,5 +34,4 @@ uvicorn chia_wallet_api:app
 
 Thanks to the contributions of [Chia Mine](https://github.com/Chia-Mine/clvm-js), MetaMask, Goby, and DeBank to crypto, we stand on your shoulders to complete this project. (🌱, 🌱)
 
-Also, thanks to Catcoin and [Taildatabase](https://www.taildatabase.com/) for sharing the token list.
 
