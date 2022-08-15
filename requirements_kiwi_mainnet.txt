@@ -1,1 +1,1 @@
-kiwi-blockchain==1.0.2
+kiwi-blockchain==1.0.3
