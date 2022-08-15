@@ -212,7 +212,7 @@ async def get_user_transactions(address: str, request: Request):
                 continue
 
             parent_result = await full_node_client.get_coin_record_by_name(record.coin.parent_coin_info)
-            if parent_result.coin.puzzle_hash != puzzle_hash:
+            if parent_result is not None and parent_result.coin.puzzle_hash != puzzle_hash:
                 if record.coin.parent_coin_info not in received:
                     received[record.coin.parent_coin_info] = {
                         'type': 'receive',
